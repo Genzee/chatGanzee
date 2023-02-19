@@ -1,23 +1,54 @@
-console.log('This is Example Script')
+import dotenv from 'dotenv';
+dotenv.config();
 
-var readline = require('readline')
+import { Configuration, OpenAIApi } from 'openai';
 
-var r = readline.createInterface({
-	input:process.stdin,
-	output:process.stdout
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-r.setPrompt('> ');
-r.prompt();
+console.log('open ai key : ', process.env.OPENAI_API_KEY);
 
-r.on('line', function(line){
-	if (line == 'exit') {
-		r.close();
-	}
-	console.log(line);
-	r.prompt()
+const openai = new OpenAIApi(configuration);
+
+//const readline = require('readline');
+import readline from 'readline';
+
+const cl = readline.createInterface({
+        input : process.stdin,
+        output : process.stdout
 });
 
-r.on('close', function() {
-	process.exit();
-});
+async function generateText(prompt) {
+    const completionParams = {
+        model: 'text-davinci-002',
+        prompt: prompt,
+        max_tokens: 60,
+        n: 1,
+        stop: null,
+        temperature: 0.7
+    };
+ 
+    try {
+        const response = await openai.createCompletion(completionParams);
+        const text = response.data.choices[0].text;
+        return text;
+    } catch (error) {
+        if (error.response) {
+            console.log(error.response.status);
+            console.log(error.response.data);
+        } else {
+            console.log(error.message);
+        }
+    }
+}
+
+function promptUser() {
+  cl.question('You: ', async (answer) => {
+          const text = await generateText(answer);
+          console.log('GenzeeBot: ', text);
+          promptUser();
+  });
+}
+
+promptUser();
